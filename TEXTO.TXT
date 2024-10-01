@@ -1,0 +1,26 @@
+Proyecto_prueba/
+├── .venv/                  # Entorno virtual
+├── src/                    # Código fuente del proyecto
+│   ├── __init__.py
+│   ├── database.py         # Conexión y operaciones con la base de datos
+│   ├── login.py            # Lógica de inicio de sesión
+│   ├── main.py             # Punto de entrada principal del proyecto
+│   ├── admin_window.py     # Ventana de administrador
+│   ├── role_management_window.py   # Ventana de gestión de roles
+│   ├── main_window.py      # Ventana principal
+│   ├── permission_management_window.py # Ventana de gestión de permisos
+│   ├── user_management_window.py   # Ventana de gestión de usuarios
+│   ├── cashier_window.py   # Ventana de cajero
+│   └── user_creation_window.py # Ventana para crear usuarios
+cashier_management_window
+├── tests/                  # Pruebas unitarias y de integración
+│   ├── __init__.py
+│   ├── test_database.py    # Pruebas para la base de datos
+│   ├── test_login.py       # Pruebas para el login
+│   ├── test_main_window.py # Pruebas para la ventana principal
+│   ├── test_cashier_window.py # Pruebas para la ventana de cajero
+│   └── test_user_creation.py # Pruebas para la creación de usuarios
+├── docs/                   # Documentación del proyecto
+│   ├── README.md           # Descripción general del proyecto
+│   └── setup.md            # Instrucciones de configuración y uso
+└── requirements.txt        # Dependencias del proyecto
