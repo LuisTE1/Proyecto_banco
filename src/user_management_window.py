@@ -11,6 +11,7 @@ ALL_WINDOWS = [
     ('user_creation_window', 'Crear Usuario'),
     ('permission_management_window', 'Gestionar Permisos'),
     ('cashier_window', 'Ventana Cajero'),
+    ('table_cashier_window', 'Tabla Bancos'),
     # Agrega aquí cualquier nueva ventana que añadas a tu aplicación
 ]
 

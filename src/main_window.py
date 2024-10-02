@@ -3,6 +3,7 @@ from database import obtener_permisos
 from cashier_window import open_cashier_window
 from user_management_window import open_user_management_window
 from role_management_window import open_role_management_window
+from table_cashier_window import open_table_cashier_window
 
 
 class MainWindow(QMainWindow):
@@ -35,6 +36,11 @@ class MainWindow(QMainWindow):
         self.menuBar().addAction(ventana_gestion_roles)
 
        
+        # Crear acción para la nueva ventana table_cashier_window
+        ventana_table_cashier = QAction('Tabla de bancos', self)
+        ventana_table_cashier.setEnabled(self.tiene_permiso('table_cashier_window'))
+        ventana_table_cashier.triggered.connect(self.open_table_cashier_window)
+        self.menuBar().addAction(ventana_table_cashier)
         
     def tiene_permiso(self, ventana):
         for permiso in self.permisos:
@@ -63,4 +69,11 @@ class MainWindow(QMainWindow):
         else:
             QMessageBox.warning(self, 'Acceso Denegado', 'No tienes permiso para acceder a esta ventana.')
 
- 
+
+    def open_table_cashier_window(self):
+        if self.tiene_permiso('table_cashier_window'):
+            self.windows['table_cashier_window'] = open_table_cashier_window()
+            self.windows['table_cashier_window'].show()
+        else:
+            QMessageBox.warning(self, 'Acceso Denegado', 'No tienes permiso para acceder a esta ventana.')
+
