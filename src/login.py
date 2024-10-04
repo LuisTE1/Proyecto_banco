@@ -16,14 +16,14 @@ def verify_login(username, password):
 class LoginWindow(QDialog):
     def __init__(self, parent=None):
         super(LoginWindow, self).__init__(parent)
-        self.setWindowTitle('Registro Del Usuario')
+        self.setWindowTitle('Registro De Bancos')
         self.resize(800, 400)
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
 
         self.image_label = QLabel(self)
-        pixmap = QPixmap('src/images/sandro.jpg')
+        pixmap = QPixmap('src/images/logo.jpg')
         self.image_label.setPixmap(pixmap)
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setFixedSize(300, 400)
