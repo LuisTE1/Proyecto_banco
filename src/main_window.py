@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QMainWindow, QAction, QMessageBox
 from database import obtener_permisos
 from cashier_window import open_cashier_window
 from user_management_window import open_user_management_window
-from role_management_window import open_role_management_window
 from table_cashier_window import open_table_cashier_window
 
 
@@ -29,12 +28,6 @@ class MainWindow(QMainWindow):
         ventana_gestion_usuarios.setEnabled(self.tiene_permiso('user_management_window'))
         ventana_gestion_usuarios.triggered.connect(self.open_user_management_window)
         self.menuBar().addAction(ventana_gestion_usuarios)
-
-        ventana_gestion_roles = QAction('Gestionar Roles', self)
-        ventana_gestion_roles.setEnabled(self.tiene_permiso('role_management_window'))
-        ventana_gestion_roles.triggered.connect(self.open_role_management_window)
-        self.menuBar().addAction(ventana_gestion_roles)
-
        
         # Crear acción para la nueva ventana table_cashier_window
         ventana_table_cashier = QAction('Tabla de bancos', self)
@@ -61,14 +54,6 @@ class MainWindow(QMainWindow):
             self.windows['user_management_window'].show()
         else:
             QMessageBox.warning(self, 'Acceso Denegado', 'No tienes permiso para acceder a esta ventana.')
-
-    def open_role_management_window(self):
-        if self.tiene_permiso('role_management_window'):
-            self.windows['role_management_window'] = open_role_management_window()
-            self.windows['role_management_window'].show()
-        else:
-            QMessageBox.warning(self, 'Acceso Denegado', 'No tienes permiso para acceder a esta ventana.')
-
 
     def open_table_cashier_window(self):
         if self.tiene_permiso('table_cashier_window'):

@@ -5,11 +5,7 @@ from database import get_users, update_user, get_roles, eliminar_usuario, obtene
 
 # Lista centralizada de todas las ventanas disponibles en la aplicación
 ALL_WINDOWS = [
-    ('admin_window', 'Ventana Admin'),
     ('user_management_window', 'Gestionar Usuarios'),
-    ('role_management_window', 'Gestionar Roles'),
-    ('user_creation_window', 'Crear Usuario'),
-    ('permission_management_window', 'Gestionar Permisos'),
     ('cashier_window', 'Ventana Cajero'),
     ('table_cashier_window', 'Tabla Bancos'),
     # Agrega aquí cualquier nueva ventana que añadas a tu aplicación

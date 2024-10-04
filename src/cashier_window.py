@@ -176,7 +176,7 @@ def open_cashier_window(username):
     main_layout.addWidget(comment_box_label, 0, 2)
     main_layout.addWidget(comment_box_input, 0, 3, 1, 4)
     
-    factura_label = QLabel("Factura")
+    factura_label = QLabel("Comprobante")
     factura_input = QLineEdit()
     main_layout.addWidget(factura_label, 1, 0)
     main_layout.addWidget(factura_input, 1, 1)

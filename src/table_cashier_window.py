@@ -34,7 +34,6 @@ class TableCashierWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle('Table Cashier Window')
         self.setGeometry(150, 150, 800, 600)
-        
         central_widget = QWidget()
         layout = QGridLayout(central_widget)
         
@@ -44,7 +43,7 @@ class TableCashierWindow(QMainWindow):
         layout.addWidget(self.bank_combo, 0, 0)
         
         self.table_widget = QTableWidget()
-        layout.addWidget(self.table_widget, 1, 0, 1, 3)
+        layout.addWidget(self.table_widget, 1, 0, 1, 4)
         
         self.upload_button = QPushButton("Subir Data")
         self.upload_button.clicked.connect(self.upload_excel)
@@ -54,44 +53,66 @@ class TableCashierWindow(QMainWindow):
         self.export_button.clicked.connect(self.export_to_excel)
         layout.addWidget(self.export_button, 2, 1)
         
-        self.date_edit = QDateEdit(calendarPopup=True)
-        self.date_edit.setDate(QDate.currentDate())
-        layout.addWidget(self.date_edit, 2, 2)
+        self.start_date_edit = QDateEdit(calendarPopup=True)
+        self.start_date_edit.setDate(QDate.currentDate().addDays(-30))  # Default to 30 days ago
+        layout.addWidget(self.start_date_edit, 2, 2)
+        
+        self.end_date_edit = QDateEdit(calendarPopup=True)
+        self.end_date_edit.setDate(QDate.currentDate())
+        layout.addWidget(self.end_date_edit, 2, 3)
+        
+        # Ajustar el estiramiento de las filas y columnas
+        layout.setRowStretch(1, 1)
+        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(1, 1)
+        layout.setColumnStretch(2, 1)
+        layout.setColumnStretch(3, 1)
         
         self.setCentralWidget(central_widget)
-    
+        self.show_table()
+
     def show_table(self):
         bank_name = self.bank_combo.currentText()
         self.table_widget.clear()
-        self.table_widget.setColumnCount(17)
-        self.table_widget.setHorizontalHeaderLabels(['Factura', 'RUC', 'Razón Social', 'Pago Depósito', 'N° OP', 'Pago Visa', 'N° REF', 'Pago Efectivo', 'Agente', 'Recaudadora', 'Interbank', 'Comentarios', 'Usuario', 'Fecha', 'Descripción', 'Monto', 'Número OP'])
+        self.table_widget.setColumnCount(14)  # Asegúrate de que este número coincida con el número de columnas en tu consulta SQL
+        self.table_widget.setHorizontalHeaderLabels([
+            'Fecha', 'Descripción', 'Monto', 'N° OP', 'Razón Social', 'Factura', 'Número OP',
+            'Pago Depósito', 'Pago Visa', 'N° REF', 'Pago Efectivo', 'Tipo de Pago', 
+            'Comentarios', 'Usuario'
+        ])
 
         try:
             conn = get_connection()
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT 
-                    COALESCE(t.Factura, '') AS Factura, 
-                    COALESCE(t.RUC, '') AS RUC, 
-                    COALESCE(t.RazonSocial, '') AS RazonSocial, 
-                    COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoDeposito), 0) AS PagoDeposito, 
-                    COALESCE(t.NOP, '') AS NOP, 
-                    COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoVisa), 0) AS PagoVisa, 
-                    COALESCE(t.NREF, '') AS NREF, 
-                    COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoEfectivo), 0) AS PagoEfectivo, 
-                    COALESCE(t.AgenteChecked, 0) AS AgenteChecked, 
-                    COALESCE(t.RecaudadoraChecked, 0) AS RecaudadoraChecked, 
-                    COALESCE(t.InterbankChecked, 0) AS InterbankChecked, 
-                    COALESCE(t.Comentarios, '') AS Comentarios, 
-                    COALESCE(t.Usuario, '') AS Usuario, 
                     COALESCE(b.fecha, '') AS fecha, 
                     COALESCE(b.descripcion, '') AS descripcion, 
                     COALESCE(TRY_CONVERT(numeric(10, 2), b.monto), 0) AS monto, 
-                    COALESCE(b.numero_op, '') AS numero_op
+                    COALESCE(b.numero_op, '') AS numero_op,
+                    COALESCE(t.RazonSocial, '') AS RazonSocial, 
+                    COALESCE(t.Factura, '') AS Factura, 
+                    COALESCE(t.NOP, '') AS NOP, 
+                    COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoDeposito), 0) AS PagoDeposito, 
+                    COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoVisa), 0) AS PagoVisa, 
+                    COALESCE(t.NREF, '') AS NREF, 
+                    COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoEfectivo), 0) AS PagoEfectivo, 
+                    CASE 
+                        WHEN t.AgenteChecked = 1 THEN 'Agente'
+                        WHEN t.RecaudadoraChecked = 1 THEN 'Recaudadora'
+                        WHEN t.InterbankChecked = 1 THEN 'Interbank'
+                        ELSE ''
+                    END AS TipoPago,
+                    COALESCE(t.Comentarios, '') AS Comentarios, 
+                    COALESCE(t.Usuario, '') AS Usuario
                 FROM Transactions t
                 FULL OUTER JOIN BancoAgente b ON t.NOP = b.numero_op
-                WHERE t.Banco = ? OR b.numero_op IS NOT NULL
-            ''', (bank_name,))
+                WHERE 
+                    (t.AgenteChecked = 1 AND ? = 'Agente') OR 
+                    (t.RecaudadoraChecked = 1 AND ? = 'Recaudadora') OR 
+                    (t.InterbankChecked = 1 AND ? = 'Interbank')
+                ORDER BY b.fecha ASC
+            ''', (bank_name, bank_name, bank_name))
             rows = cursor.fetchall()
 
             self.table_widget.setRowCount(len(rows))
@@ -105,7 +126,12 @@ class TableCashierWindow(QMainWindow):
             QMessageBox.critical(self, 'Error de Base de Datos', f'Error al obtener los datos: {str(db_err)}')
         except Exception as e:
             QMessageBox.critical(self, 'Error', f'Ocurrió un error inesperado: {str(e)}')
+        
+        # Ajustar automáticamente las columnas y filas
+        self.table_widget.resizeColumnsToContents()
+        self.table_widget.resizeRowsToContents()
 
+        
     def upload_excel(self):
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getOpenFileName(self, "Seleccionar Archivo Excel", "", "Excel Files (*.xlsx);;All Files (*)", options=options)
@@ -130,9 +156,9 @@ class TableCashierWindow(QMainWindow):
                 QMessageBox.critical(self, 'Error de Base de Datos', f'Error al subir los datos: {str(db_err)}')
             except Exception as e:
                 QMessageBox.critical(self, 'Error', f'Ocurrió un error inesperado: {str(e)}')
-    
     def export_to_excel(self):
-        date = self.date_edit.date().toString("yyyy-MM-dd")
+        start_date = self.start_date_edit.date().toString("yyyy-MM-dd")
+        end_date = self.end_date_edit.date().toString("yyyy-MM-dd")
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getSaveFileName(self, "Guardar Archivo Excel", "", "Excel Files (*.xlsx);;All Files (*)", options=options)
         if file_path:
@@ -141,36 +167,45 @@ class TableCashierWindow(QMainWindow):
                 cursor = conn.cursor()
                 cursor.execute('''
                     SELECT 
-                        COALESCE(t.Factura, '') AS Factura, 
-                        COALESCE(t.RUC, '') AS RUC, 
-                        COALESCE(t.RazonSocial, '') AS RazonSocial, 
-                        COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoDeposito), 0) AS PagoDeposito, 
-                        COALESCE(t.NOP, '') AS NOP, 
-                        COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoVisa), 0) AS PagoVisa, 
-                        COALESCE(t.NREF, '') AS NREF, 
-                        COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoEfectivo), 0) AS PagoEfectivo, 
-                        COALESCE(t.AgenteChecked, 0) AS AgenteChecked, 
-                        COALESCE(t.RecaudadoraChecked, 0) AS RecaudadoraChecked, 
-                        COALESCE(t.InterbankChecked, 0) AS InterbankChecked, 
-                        COALESCE(t.Comentarios, '') AS Comentarios, 
-                        COALESCE(t.Usuario, '') AS Usuario, 
                         COALESCE(b.fecha, '') AS fecha, 
                         COALESCE(b.descripcion, '') AS descripcion, 
                         COALESCE(TRY_CONVERT(numeric(10, 2), b.monto), 0) AS monto, 
-                        COALESCE(b.numero_op, '') AS numero_op
+                        COALESCE(b.numero_op, '') AS numero_op,
+                        COALESCE(t.RazonSocial, '') AS RazonSocial, 
+                        COALESCE(t.Factura, '') AS Factura, 
+                        COALESCE(t.NOP, '') AS NOP, 
+                        COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoDeposito), 0) AS PagoDeposito, 
+                        COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoVisa), 0) AS PagoVisa, 
+                        COALESCE(t.NREF, '') AS NREF, 
+                        COALESCE(TRY_CONVERT(numeric(10, 2), t.PagoEfectivo), 0) AS PagoEfectivo, 
+                        CASE 
+                            WHEN t.AgenteChecked = 1 THEN 'Agente'
+                            WHEN t.RecaudadoraChecked = 1 THEN 'Recaudadora'
+                            WHEN t.InterbankChecked = 1 THEN 'Interbank'
+                            ELSE ''
+                        END AS TipoPago,
+                        COALESCE(t.Comentarios, '') AS Comentarios, 
+                        COALESCE(t.Usuario, '') AS Usuario
                     FROM Transactions t
-                    FULL OUTER JOIN BancoAgente b ON t.NOP = b.numero_op
-                    WHERE b.fecha = ?
-                ''', (date,))
+                    FULL OUTER JOIN BancoAgente b
+                    ON t.NOP = b.numero_op
+                    WHERE b.fecha BETWEEN ? AND ?
+                    ORDER BY b.fecha ASC
+                ''', (start_date, end_date))
                 rows = cursor.fetchall()
                 
-                df = pd.DataFrame(rows, columns=[
-                    'Factura', 'RUC', 'Razón Social', 'Pago Depósito', 'N° OP', 'Pago Visa', 'N° REF', 
-                    'Pago Efectivo', 'Agente', 'Recaudadora', 'Interbank', 'Comentarios', 'Usuario', 
-                    'Fecha', 'Descripción', 'Monto', 'Número OP'
-                ])
-                df.to_excel(file_path, index=False)
+                # Definir las columnas estáticas
+                columns = [
+                    'Fecha', 'Descripción', 'Monto', 'N° OP', 'Razón Social', 'Factura', 'Número OP',
+                    'Pago Depósito', 'Pago Visa', 'N° REF', 'Pago Efectivo', 'Tipo de Pago', 
+                    'Comentarios', 'Usuario'
+                ]
                 
+                # Asegurarse de que cada fila tenga 14 columnas
+                rows = [tuple(row) + ('',) * (len(columns) - len(row)) for row in rows]
+
+                df = pd.DataFrame(rows, columns=columns)
+                df.to_excel(file_path, index=False)
                 cursor.close()
                 conn.close()
                 QMessageBox.information(self, 'Éxito', 'Datos exportados exitosamente!')
@@ -179,24 +214,15 @@ class TableCashierWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, 'Error', f'Ocurrió un error inesperado: {str(e)}')
 
-    def test_connection():
-        try:
-            conn = get_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-            cursor.close()
-            conn.close()
-            if result:
-                print("Conexión exitosa")
-            else:
-                print("Conexión fallida")
-        except pyodbc.Error as db_err:
-            print(f"Error de Base de Datos: {str(db_err)}")
-        except Exception as e:
-            print(f"Ocurrió un error inesperado: {str(e)}")
-
 
 def open_table_cashier_window():
     window = TableCashierWindow()
     return window
+
+
+
+
+    
+
+
+
